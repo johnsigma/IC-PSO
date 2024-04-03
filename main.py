@@ -1,5 +1,6 @@
 import random
 
+# melhorPosicaoGlobal = 0
 
 def ler_arquivo(nomeArquivo, numTarefas, dicionarioTarefas):
     with open(nomeArquivo, 'r') as arquivo:
@@ -53,10 +54,10 @@ def fitness(particula, numProcessadores, numTarefas, dicionarioTarefas):
     return (a / S_length)
 
 
-def inicializa_enxame(numTarefas, numProcessadores, tamanhoEnxame, dicionarioTarefas):
-    enxame = []
+def espaco_de_busca(numTarefas, numProcessadores, tamanhoPopulacao, dicionarioTarefas):
+    espacoDeBusca = []
 
-    for _ in range(tamanhoEnxame):
+    for _ in range(tamanhoPopulacao):
         particula = []
         tarefasAlocadas = []
 
@@ -97,25 +98,70 @@ def inicializa_enxame(numTarefas, numProcessadores, tamanhoEnxame, dicionarioTar
                     tarefasAlocadas.append(indiceTarefa)
                     break
 
+        espacoDeBusca.append(particula)
+
+    return espacoDeBusca
+
+def inicializa_exame(tamanhoEnxame, espacoDeBusca):
+    enxame = []
+    for i in range(tamanhoEnxame):
+        posicao = random.randint(0, len(espacoDeBusca)-1)
+        fitness = fitness(espacoDeBusca[posicao], numProcessadores, numTarefas, dicionarioTarefas)
+        particula = {
+            'posicao_atual': posicao,
+            'melhor_posicao': posicao,
+            'velocidade': 0,
+            'fitness_atual': fitness,
+            'melhor_fitness': fitness
+        }
         enxame.append(particula)
 
     return enxame
 
+def melhor_fitness_global(enxame, espacoDeBusca, numProcessadores, numTarefas, dicionarioTarefas):
+    melhor = {
+        'fitness': enxame[0]['fitness_atual'],
+        'posicao': enxame[0]['posicao_atual']
+    }
+    for i in range(len(enxame)):
+        fitness = fitness(espacoDeBusca[enxame[i]['posicao_atual']], numProcessadores, numTarefas, dicionarioTarefas)
+        if fitness < melhor['fitness']:
+            melhor['fitness'] = fitness
+            melhor['posicao'] = enxame[i]['posicao_atual']
+    
+    return melhor
+
+def atualiza_enxame(enxame, espacoDeBusca, dicionarioTarefas, numProcessadores, numTarefas):
+    for i in range(len(enxame)):
+        fitness_atual = enxame[i]['fitness_atual']
+        fitness_melhor = enxame[i]['melhor_fitness']
+        # fitness_atual = fitness(espacoDeBusca[enxame[i]['posicao_atual']], numProcessadores, numTarefas, dicionarioTarefas)
+        # fitness_melhor = fitness(espacoDeBusca[enxame[i]['melhor_posicao']], numProcessadores, numTarefas, dicionarioTarefas)
+
+        if fitness_atual < fitness_melhor:
+            enxame[i]['melhor_posicao'] = enxame[i]['posicao_atual']
 
 if __name__ == '__main__':
     dicionarioTarefas = {}
     numTarefas = 0
     nomeArquivo = 'exemplo.stg'
     numProcessadores = 4
-    tamanhoEnxame = 20
+    tamanhoPopulacao = 20
 
     numTarefas, dicionarioTarefas = ler_arquivo(
         nomeArquivo, numTarefas, dicionarioTarefas)
 
-    enxame = inicializa_enxame(
-        numTarefas, numProcessadores, tamanhoEnxame, dicionarioTarefas)
+    espacoBusca = espaco_de_busca(
+        numTarefas, numProcessadores, tamanhoPopulacao, dicionarioTarefas)
+    
+    enxame = inicializa_exame(tamanhoPopulacao, espacoBusca)
+    print('Espaço de busca:')
 
-    for particula in enxame:
+    for particula in espacoBusca:
         print('\n\nFitness:')
         f = fitness(particula, numProcessadores, numTarefas, dicionarioTarefas)
         print(f)
+
+    print('\n\nEnxame:')
+    for particula in enxame:
+        print(particula)
